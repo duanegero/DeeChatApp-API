@@ -45,6 +45,11 @@ router.post("/", async (req, res) => {
       return res.status(500).json({ message: "Failed to create new user" });
     }
 
+    //if error returned return status and json
+    if (newUser.error) {
+      return res.status(400).json({ error: newUser.error });
+    }
+
     //return success status and json
     res.status(201).json({ message: "New user created", newUser });
   } catch (error) {
@@ -109,6 +114,11 @@ router.put("/update/:username", verifyToken, async (req, res) => {
     //if nothing from helper function return error status
     if (!updatedUsername) {
       return res.status(500).json({ message: "Failed to updated username." });
+    }
+
+    //if helper returns error return status with json
+    if (updatedUsername.error) {
+      return res.status(400).json({ error: updatedUsername.error });
     }
 
     //return ok status with json and updated username

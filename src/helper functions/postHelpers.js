@@ -15,26 +15,51 @@ const postNewUser = async (
   const ageInt = parseInt(age, 10);
 
   try {
-    //variable to handle prisma query
-    const newUser = await prisma.user_info.create({
-      data: {
-        first_name: first_name,
-        last_name: last_name,
-        email: email,
-        age: ageInt,
-        user_login: {
-          create: {
-            username: username,
-            password: password,
-          },
-        },
+    const existingUser = await prisma.user_info.findFirst({
+      where: {
+        OR: [{ email }, { user_login: { is: { username: username } } }],
+      },
+      include: {
+        user_login: true,
       },
     });
 
-    //log message id successful
-    console.log("New user created:", newUser);
-    //return result to use else where
-    return newUser;
+    //if existing user found
+    if (existingUser) {
+      // if email already exist return error
+      if (existingUser.email === email) {
+        return { error: "EMAIL_ALREADY_EXISTS" };
+      }
+
+      //if username already exist return error
+      if (
+        existingUser.user_login &&
+        existingUser.user_login?.username === username
+      ) {
+        return { error: "USERNAME_ALREADY_EXISTS" };
+      }
+    } else {
+      //variable to handle prisma query
+      const newUser = await prisma.user_info.create({
+        data: {
+          first_name: first_name,
+          last_name: last_name,
+          email: email,
+          age: ageInt,
+          user_login: {
+            create: {
+              username: username,
+              password: password,
+            },
+          },
+        },
+      });
+
+      //log message id successful
+      console.log("New user created:", newUser);
+      //return result to use else where
+      return { message: "New user created", newUser };
+    }
   } catch (error) {
     //catch and log if any errors
     console.error("Error creating new user:", error);

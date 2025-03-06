@@ -11,6 +11,7 @@ const { deleteUser } = require("../helper functions/deleteHelpers");
 const {
   updateUsername,
   updateUser,
+  updateEmail,
 } = require("../helper functions/putHelpers");
 
 const verifyToken = require("../middleware/token");
@@ -134,7 +135,7 @@ router.put("/:id", verifyToken, async (req, res) => {
   //variable to handle id as Int
   const userId = parseInt(req.params.id);
   //variables to handle updated data passed in body
-  const { first_name, last_name, email, age } = req.body;
+  const { first_name, last_name, age } = req.body;
 
   //if no id return error status and json
   if (!userId) {
@@ -142,7 +143,7 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 
   //if no updates passed return error status and json
-  if (!first_name || !last_name || !email || !age) {
+  if (!first_name || !last_name || !age) {
     return res.status(400).json({
       error: "Need all fields to update user ",
     });
@@ -150,13 +151,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 
   try {
     //variable to handle helper function with passed in variables
-    const updatedUser = await updateUser(
-      userId,
-      first_name,
-      last_name,
-      email,
-      age
-    );
+    const updatedUser = await updateUser(userId, first_name, last_name, age);
 
     //if nothing return from helper return errors status and json
     if (!updatedUser) {
@@ -169,6 +164,34 @@ router.put("/:id", verifyToken, async (req, res) => {
     //catch if any error and return status
     console.error("Error occurred while updating user.", error);
     res.status(500).json({ error: "Error occurred while updating user" });
+  }
+});
+
+router.put("/email/:id", async (req, res) => {
+  const userId = req.params.id;
+  const { newEmail } = req.body;
+
+  if (!userId || !newEmail) {
+    return res.status(400).json({
+      message: "User ID or Email field missing.",
+    });
+  }
+
+  try {
+    const updatedEmail = await updateEmail(userId, newEmail);
+
+    if (!updatedEmail) {
+      return res.status(500).json({ message: "Failed to update email." });
+    }
+
+    if (updatedEmail.error) {
+      return res.status(400).json({ error: updatedEmail.error });
+    }
+    res.status(200).json({ message: "Updated email", updatedEmail });
+  } catch (error) {
+    //catch if any errors log and return error status
+    console.error("Error occurred while updating username.", error);
+    res.status(500).json({ error: "Error occurred while updating username." });
   }
 });
 

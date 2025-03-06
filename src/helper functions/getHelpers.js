@@ -40,7 +40,30 @@ const getUserDetails = async (userId) => {
   }
 };
 
+const getUserEmail = async (email) => {
+  try {
+    const userEmail = await prisma.user_info.findUnique({
+      where: { email: email },
+      select: {
+        email: true,
+        user_login: {
+          select: { username: true },
+        },
+      },
+    });
+    if (!userEmail) {
+      console.log("No Email address found.");
+    }
+    return userEmail;
+  } catch (error) {
+    //catch and log any errors if found
+    console.error("Error fetching user data from database.", error);
+    throw error;
+  }
+};
+
 //export function to use in other places
 module.exports = {
   getUserDetails,
+  getUserEmail,
 };

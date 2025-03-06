@@ -6,7 +6,10 @@ const bcrypt = require("bcrypt");
 
 //importing helper functions
 const { postNewUser } = require("../helper functions/postHelpers");
-const { getUserDetails } = require("../helper functions/getHelpers");
+const {
+  getUserDetails,
+  getUserEmail,
+} = require("../helper functions/getHelpers");
 const { deleteUser } = require("../helper functions/deleteHelpers");
 const {
   updateUsername,
@@ -96,6 +99,30 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
+router.get("/forgot-password/:email", async (req, res) => {
+  //getting the email from the URL
+  const userEmail = req.params.email;
+
+  try {
+    //variable to handle helper function with passed in variable
+    const userEmailDetails = await getUserEmail(userEmail);
+
+    //response success status and json
+    res.status(200).json(userEmailDetails);
+  } catch (error) {
+    //catch if any errors, log and respond error status json
+    console.error(
+      "Error occurred while fetching email details.",
+      error.message,
+      error.stack
+    );
+    res.status(500).json({
+      message: "An error occurred while fetching email",
+      error: error.message,
+    });
+  }
+});
+
 router.put("/update/:username", verifyToken, async (req, res) => {
   //variables to handle username and new username
   const username = req.params.username;
@@ -167,10 +194,12 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 });
 
-router.put("/email/:id", async (req, res) => {
+router.put("/email/:id", verifyToken, async (req, res) => {
+  //variable to handle data from URL and body
   const userId = req.params.id;
   const { newEmail } = req.body;
 
+  //if both variable aren't there return error
   if (!userId || !newEmail) {
     return res.status(400).json({
       message: "User ID or Email field missing.",
@@ -178,15 +207,20 @@ router.put("/email/:id", async (req, res) => {
   }
 
   try {
+    //vaiable to handle helepr function
     const updatedEmail = await updateEmail(userId, newEmail);
 
+    //if nothing returned from helper return error status and json
     if (!updatedEmail) {
       return res.status(500).json({ message: "Failed to update email." });
     }
 
+    //if has error return status with json
     if (updatedEmail.error) {
       return res.status(400).json({ error: updatedEmail.error });
     }
+
+    //return success status and json
     res.status(200).json({ message: "Updated email", updatedEmail });
   } catch (error) {
     //catch if any errors log and return error status

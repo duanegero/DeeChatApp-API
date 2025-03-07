@@ -51,9 +51,13 @@ const getUserEmail = async (email) => {
         },
       },
     });
+
+    //if no email found return error
     if (!userEmail) {
-      console.log("No Email address found.");
+      return { error: "EMAIL_NOT_FOUND" };
     }
+
+    //return json with found values
     return userEmail;
   } catch (error) {
     //catch and log any errors if found
